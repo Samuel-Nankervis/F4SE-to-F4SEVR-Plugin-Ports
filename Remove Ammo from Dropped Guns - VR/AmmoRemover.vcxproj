@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{4D608E7E-FD4F-4725-BEC0-3B25D5B79A9F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>AmmoRemover</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
+    <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(Configuration)\</OutDir>
+    <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ForcedIncludeFiles>common/IPrefix.h</ForcedIncludeFiles>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\x64_vc11\Debug\common_vc11.lib;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\x64\Debug\f4se_common.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent>
+      <Command>echo F|copy /Y "$(ProjectDir)AmmoRemoverDefaults.ini" "$(TargetDir)AmmoRemoverDefaults.ini"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;PLUGIN_EXAMPLE_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ForcedIncludeFiles>common/IPrefix.h</ForcedIncludeFiles>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <CompileAs>CompileAsCpp</CompileAs>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\x64_vc11\Release\common_vc11.lib;$(ProjectDir)..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\x64\Release\f4se_common.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <PostBuildEvent>
+      <Command>echo F|copy /Y "$(ProjectDir)AmmoRemoverDefaults.ini" "$(TargetDir)AmmoRemoverDefaults.ini"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\ArConfig.cpp" />
+    <ClCompile Include="src\ArLogger.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\TESDeathEventHandler.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameAPI.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameExtraData.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameRTTI.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameThreads.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameTypes.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\GameUtilities.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusArgs.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusEvents.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusInterfaces.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusUtilities.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusValue.cpp" />
+    <ClCompile Include="..\F4SE Source\F4SEVR\f4sevr_0_6_21\src\f4sevr\f4se\PapyrusVM.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\ArConfig.h" />
+    <ClInclude Include="include\ArLogger.h" />
+    <ClInclude Include="include\INIReader.h" />
+    <ClInclude Include="include\TESDeathEventHandler.h" />
+    <ClInclude Include="include\version.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="version.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="AmmoRemoverDefaults.ini" />
+    <None Include="exports.def" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

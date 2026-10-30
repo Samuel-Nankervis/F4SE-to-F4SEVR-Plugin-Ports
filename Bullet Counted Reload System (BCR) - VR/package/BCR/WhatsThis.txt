@@ -1,0 +1,1 @@
+The purpose of this directory is to contain .ini files that are basically just a collection of FormIDs for weapons that use the bullet counted reload functionality.

@@ -1,0 +1,44 @@
+# Ignore thumbnails created by Windows
+Thumbs.db
+ehthumbs.db
+
+# Exclude original plugins used as reference (per repository requirements)
+Bullet Counted Reload System (BCR) - Original/
+Remove Ammo from Dropped Guns - Original/
+
+# Visual Studio / MSBuild temporary build directories and files
+.vs/
+intermediate/
+*.obj
+*.iobj
+*.ipdb
+*.tlog
+*.lastbuildstate
+*.unsuccessfulbuild
+*.recipe
+*.ilk
+*.exp
+*.suo
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.sbr
+*.opensdf
+*.sdf
+_ReSharper*/
+[Tt]est[Rr]esult*
+$Recycle.Bin/
+
+# Preserve release binaries and libraries
+!*.dll
+!*.lib
+!*.pdb
+!*.zip
