@@ -30,9 +30,9 @@ A complete port of **Remove Ammo from Dropped Guns** by *ScottyDoesKnow* to Fall
 
 ---
 
-## Tools and Build Environment Included
+## Tools and Build Environment
 
-This repository contains all supporting libraries, SDKs, and source dependencies required to build and maintain F4SEVR plugins:
+This repository does not contain all supporting libraries, SDKs, and source dependencies required to build and maintain F4SEVR plugins:
 
 - **`F4SE Source/F4SEVR/f4sevr_0_6_21/`**: The complete Fallout 4 VR Script Extender source code and pre-compiled static libraries (`f4se_common.lib`, `common_vc11.lib`).
 - **`Address Library Source/`**: Complete database files (`fo4_database.csv`, `VR/version-1-2-72-0.csv`, `version-1-2-72-0.bin`) for reverse-engineering and symbol resolution.
@@ -43,7 +43,6 @@ This repository contains all supporting libraries, SDKs, and source dependencies
 ## Directory Structure
 
 ```
-├── Address Library Source/                      # VR Address Library databases & tools
 ├── Bullet Counted Reload System (BCR) - VR/     # BCR VR source code, project, & packages
 │   ├── bin/Release/                             # Built binaries (BulletCountedReload.dll)
 │   ├── package/                                 # Ready-to-use mod package layout
@@ -51,12 +50,6 @@ This repository contains all supporting libraries, SDKs, and source dependencies
 │   ├── BulletCountedReload.vcxproj              # Visual Studio 2022 project
 │   ├── BulletCountedReload-v2.05-VR.zip         # End-user release archive
 │   └── README.md
-├── Data/                                        # Shared mod data
-│   └── BCR/                                     # BCR documentation
-├── F4SE Source/                                 # F4SEVR source and prebuilt link libraries
-│   ├── F4SEVR/                                  # F4SEVR 0.6.21 source & libs
-│   └── F4SE_Flat/                               # Flat F4SE 0.7.9 reference source
-├── FO4VRTools/                                  # FO4VRTools source & OpenVR hook API
 ├── Remove Ammo from Dropped Guns - VR/          # Ammo Remover VR source & packages
 │   ├── bin/Release/                             # Built binaries (AmmoRemover.dll)
 │   ├── include/                                 # Header files
@@ -77,6 +70,9 @@ This repository contains all supporting libraries, SDKs, and source dependencies
 ### Prerequisites
 - Visual Studio 2022 (Community edition or higher) with the **Desktop development with C++** workload.
 - Windows 10 / 11 SDK (10.0.x).
+- **`F4SE Source/F4SEVR/f4sevr_0_6_21/`**: The complete Fallout 4 VR Script Extender source code and pre-compiled static libraries (`f4se_common.lib`, `common_vc11.lib`).
+- **`Address Library Source/`**: Complete database files (`fo4_database.csv`, `VR/version-1-2-72-0.csv`, `version-1-2-72-0.bin`) for reverse-engineering and symbol resolution.
+- **`FO4VRTools/`**: Full source code for FO4VRTools by *lfrazer*, providing the OpenVR hook manager API for motion controller input intercepting.
 
 ### Steps
 1. Clone this repository:
@@ -112,4 +108,3 @@ Extract each `.zip` archive into your Fallout 4 VR game folder:
 - **lfrazer** – Author of [FO4VRTools](https://github.com/lfrazer/FO4VRTools).
 - **Ian Patterson, Stephen Abel, Paul Connelly (ianpatt, behippo, scruggsywuggsy99)** – F4SE and F4SEVR developers.
 - **meh321** – Author of Address Library for F4SE.
-- **Samuel Nankervis / Antigravity** – VR ports, bug fixes, motion controller integration, performance optimization.
