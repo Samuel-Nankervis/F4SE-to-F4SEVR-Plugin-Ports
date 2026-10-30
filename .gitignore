@@ -5,6 +5,10 @@ ehthumbs.db
 # Exclude original plugins used as reference (per repository requirements)
 Bullet Counted Reload System (BCR) - Original/
 Remove Ammo from Dropped Guns - Original/
+Address Library Source/
+Data/
+F4SE Source/
+FO4VRTools/
 
 # Visual Studio / MSBuild temporary build directories and files
 .vs/
