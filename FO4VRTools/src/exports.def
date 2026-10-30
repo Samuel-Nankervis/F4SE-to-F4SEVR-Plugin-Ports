@@ -1,6 +1,0 @@
-LIBRARY	"fo4vrtools"
-EXPORTS
-F4SEPlugin_Query
-F4SEPlugin_Load
-GetVRHookManager
-GetPluginVersion
