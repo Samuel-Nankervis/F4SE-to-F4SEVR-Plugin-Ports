@@ -356,22 +356,13 @@ UInt8 tf1_Hook(void* arg1, BSAnimationGraphEvent* arg2, void** arg3) {
 
 struct TESEquipEvent
 {
-	TESObjectREFR* owner;        // 00
-	UInt32            FormID;        // 08
-	UInt32				refFormID;			// 0C
-	UInt8				unk10;			// 10
-	UInt8				unk11;			// 11
-	UInt8				status;
-	char              padding2[94]; 
-
-	BGSInventoryItem::Stack* invItem; //78
-	char			  padding3[8];
-	TESObject* item;
-	TESObjectWEAP::InstanceData* instanceData;
+	TESObjectREFR*    owner;     // 00
+	UInt32            FormID;    // 08
+	UInt32            refFormID; // 0C
+	UInt8             unk10;     // 10
+	UInt8             unk11;     // 11
+	UInt8             status;    // 12
 };
-STATIC_ASSERT(offsetof(TESEquipEvent, instanceData) == 0x90);
-STATIC_ASSERT(offsetof(TESEquipEvent, invItem) == 0x78);
-STATIC_ASSERT(offsetof(TESEquipEvent, item) == 0x88);
 
 DECLARE_EVENT_DISPATCHER(TESEquipEvent, 0x0042AF70); // Fallout 4 VR 1.2.72.0 (QSource<TESEquipEvent>)
 
@@ -462,7 +453,9 @@ public:
 						reloadEndHandle();
 						weapInstance = nullptr;
 						maxAmmoCapacity = 0;
-						_MESSAGE("[BCR] Player unequipped weapon 0x%08X", evn->FormID);
+						ammoCapacity = 0;
+						_MESSAGE("[BCR] Player unequipped weapon '%s' (0x%08X)",
+							static_cast<TESObjectWEAP*>(ff)->GetFullName(), evn->FormID);
 					}
 				}
 			}
@@ -473,25 +466,14 @@ public:
 					TESObjectWEAP* f = (TESObjectWEAP*)ff;
 					reloadEndHandle();
 					if (f->weapData.skill == checkAvif || f->weapData.skill == checkAvif2) {
-						if (evn->instanceData) {
-							if (evn->instanceData->skill != checkAvif && evn->instanceData->skill != checkAvif2) {
-								evn->instanceData->skill = f->weapData.skill;
-							}
-							weapInstance = evn->instanceData;
-							maxAmmoCapacity = weapInstance->ammoCapacity;
-							ammoCapacity = maxAmmoCapacity;
-							_MESSAGE("[BCR] Equipped BCR weapon via event: '%s' (0x%08X), capacity: %d",
-								f->GetFullName(), f->formID, maxAmmoCapacity);
-						}
-						else if (evn->invItem) {
-							HanldeWeaponEquip(f, evn->invItem);
-						}
-						else {
-							UpdateEquippedWeapon();
-						}
+						_MESSAGE("[BCR] Equipped BCR weapon: '%s' (0x%08X), resolving instance...",
+							f->GetFullName(), f->formID);
+						UpdateEquippedWeapon();
 					}
 					else {
 						weapInstance = nullptr;
+						maxAmmoCapacity = 0;
+						ammoCapacity = 0;
 					}
 				}
 			}

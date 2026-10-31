@@ -2,66 +2,32 @@
 
 typedef bool(*_IKeywordFormBase_HasKeyword)(IKeywordFormBase* keywordFormBase, BGSKeyword* keyword, UInt32 unk3);
 
-static uintptr_t s_modListOffset = 0;
-static int s_nameOffset = 0x70;
-static bool s_offsetSearched = false;
-
-uintptr_t GetModListOffset(char* pData)
+static bool DoesFormMatchMod(TESForm* form, const std::string& modName)
 {
-	if (s_offsetSearched) return s_modListOffset;
-	s_offsetSearched = true;
-
-	_MESSAGE("[GetModListOffset] Scanning TESDataHandler (%p) for compiled file collection...", pData);
-
-	// Scan candidate BSTArray offsets (entries pointer at +off, count at +off+8)
-	for (uintptr_t off = 0x0500; off < 0x1500; off += 8) {
-		__try {
-			void** candidateArray = *reinterpret_cast<void***>(pData + off);
-			UInt32 candidateCount = *reinterpret_cast<UInt32*>(pData + off + 8);
-
-			if (candidateArray && candidateCount >= 1 && candidateCount < 500) {
-				char* firstFile = reinterpret_cast<char*>(candidateArray[0]);
-				if (firstFile) {
-					static const int kNameOffsets[] = { 0x70, 0x58, 0x48, 0x6C, 0x50, 0x68 };
-					for (int noff : kNameOffsets) {
-						const char* candidateName = firstFile + noff;
-						if (_stricmp(candidateName, "Fallout4.esm") == 0) {
-							s_modListOffset = off;
-							s_nameOffset = noff;
-							_MESSAGE("[GetModListOffset] Discovered compiled file array at TESDataHandler + 0x%04X (count: %u, nameOffset: 0x%02X)",
-								(UInt32)off, candidateCount, noff);
-							return off;
-						}
+	if (!form) return false;
+	__try {
+		// 1. Check form->unk08 (array of ModInfo* pointers of mods modifying this form)
+		if (form->unk08 && form->unk08->entries && form->unk08->size > 0 && form->unk08->size < 100) {
+			for (UInt64 i = 0; i < form->unk08->size; ++i) {
+				ModInfo* info = form->unk08->entries[i];
+				if (info && info->name[0] != '\0') {
+					if (_stricmp(info->name, modName.c_str()) == 0) {
+						return true;
 					}
 				}
 			}
 		}
-		__except (EXCEPTION_EXECUTE_HANDLER) {}
-	}
 
-	_MESSAGE("[GetModListOffset] Warning: Pointer array scan did not find Fallout4.esm, scanning linked list nodes...");
-	for (uintptr_t off = 0x0500; off < 0x1500; off += 8) {
-		__try {
-			struct SimpleNode { void* item; SimpleNode* next; };
-			SimpleNode* node = *reinterpret_cast<SimpleNode**>(pData + off);
-			if (node && node->item) {
-				char* firstFile = reinterpret_cast<char*>(node->item);
-				static const int kNameOffsets[] = { 0x70, 0x58, 0x48, 0x6C };
-				for (int noff : kNameOffsets) {
-					if (_stricmp(firstFile + noff, "Fallout4.esm") == 0) {
-						_MESSAGE("[GetModListOffset] Found mod BSSimpleList at TESDataHandler + 0x%04X (nameOffset: 0x%02X)", (UInt32)off, noff);
-						s_modListOffset = off;
-						s_nameOffset = noff;
-						return off;
-					}
-				}
+		// 2. Check virtual GetLastModifiedMod
+		ModInfo* lastMod = form->GetLastModifiedMod();
+		if (lastMod && lastMod->name[0] != '\0') {
+			if (_stricmp(lastMod->name, modName.c_str()) == 0) {
+				return true;
 			}
 		}
-		__except (EXCEPTION_EXECUTE_HANDLER) {}
 	}
-
-	_MESSAGE("[GetModListOffset] Failed to locate mod list in TESDataHandler.");
-	return 0;
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+	return false;
 }
 
 bool VR_LookupLoadedMod(const char* modName, VRModInfo* outInfo)
@@ -74,7 +40,7 @@ bool VR_LookupLoadedMod(const char* modName, VRModInfo* outInfo)
 		if (outInfo) {
 			outInfo->name = "Fallout4.esm";
 			outInfo->compileIndex = 0;
-			outInfo->smallFileCompileIndex = 0;
+			outInfo->smallFileCompileIndex = 0xFFFF;
 			outInfo->isLight = false;
 		}
 		return true;
@@ -88,48 +54,59 @@ bool VR_LookupLoadedMod(const char* modName, VRModInfo* outInfo)
 	char* pData = reinterpret_cast<char*>(*g_dataHandler);
 
 	__try {
-		uintptr_t arrOffset = GetModListOffset(pData);
-		if (arrOffset != 0) {
-			void** files = *reinterpret_cast<void***>(pData + arrOffset);
-			UInt32 count = *reinterpret_cast<UInt32*>(pData + arrOffset + 8);
-
-			if (files && count > 0 && count < 1000) {
-				for (UInt32 i = 0; i < count; ++i) {
-					char* pFile = reinterpret_cast<char*>(files[i]);
-					if (!pFile) continue;
-
-					const char* fname = pFile + s_nameOffset;
-					UInt8 cIdx = *reinterpret_cast<UInt8*>(pFile + 0x370);
-					UInt16 sIdx = *reinterpret_cast<UInt16*>(pFile + 0x372);
-					UInt32 flags = *reinterpret_cast<UInt32*>(pFile + 0x334);
-					bool isLight = (flags & (1 << 9)) != 0;
-
-					if (_stricmp(fname, modName) == 0) {
-						if (outInfo) {
-							outInfo->name = fname;
-							outInfo->compileIndex = cIdx;
-							outInfo->smallFileCompileIndex = sIdx;
-							outInfo->isLight = isLight;
+		// Strategy 1: Daytripper4 / VR SmallFileLoader collection at TESDataHandler + 0x17B8
+		void** pSmallCollection = *reinterpret_cast<void***>(pData + 0x17B8);
+		if (pSmallCollection) {
+			void** smallFiles = reinterpret_cast<void**>(pSmallCollection[0]);
+			UInt32 smallCount = *reinterpret_cast<UInt32*>(reinterpret_cast<char*>(pSmallCollection) + 0x10);
+			if (smallFiles && smallCount > 0 && smallCount < 0x1000) {
+				for (UInt32 i = 0; i < smallCount; ++i) {
+					char* pFile = reinterpret_cast<char*>(smallFiles[i]);
+					if (pFile) {
+						const char* fname = pFile + 0x70; // ModInfo::name is at offset 0x70
+						if (_stricmp(fname, modName) == 0) {
+							if (outInfo) {
+								outInfo->name = fname;
+								outInfo->compileIndex = 0xFE;
+								outInfo->smallFileCompileIndex = static_cast<UInt16>(i);
+								outInfo->isLight = true;
+							}
+							_MESSAGE("[VR_LookupLoadedMod] Found light mod '%s' at smallFileIndex 0x%03X via SmallFiles collection",
+								fname, i);
+							return true;
 						}
-						_MESSAGE("[VR_LookupLoadedMod] Found mod '%s' at compileIndex 0x%02X (light: %d)",
-							fname, cIdx, isLight ? 1 : 0);
-						return true;
 					}
 				}
 			}
 		}
 
-		// Fallback check on F4SE's modList at 0xFB0
+		// Strategy 2: Check F4SE's loadedMods array (regular full plugins 0x00 to 0xFD)
 		const ModInfo* f4seMod = (*g_dataHandler)->LookupLoadedModByName(modName);
 		if (f4seMod && f4seMod->modIndex != 0xFF) {
+			bool isLight = (f4seMod->modIndex == 0xFE);
 			if (outInfo) {
 				outInfo->name = f4seMod->name;
 				outInfo->compileIndex = f4seMod->modIndex;
-				outInfo->smallFileCompileIndex = 0xFFFF;
-				outInfo->isLight = false;
+				outInfo->smallFileCompileIndex = f4seMod->lightIndex;
+				outInfo->isLight = isLight;
 			}
-			_MESSAGE("[VR_LookupLoadedMod] Found mod '%s' via F4SE modList at compileIndex 0x%02X",
-				f4seMod->name, f4seMod->modIndex);
+			_MESSAGE("[VR_LookupLoadedMod] Found mod '%s' via loadedMods at compileIndex 0x%02X (light: %d, lightIndex: 0x%04X)",
+				f4seMod->name, f4seMod->modIndex, isLight ? 1 : 0, f4seMod->lightIndex);
+			return true;
+		}
+
+		// Strategy 3: Check DataHandler's modInfoList (linked list of all loaded plugins)
+		const ModInfo* listMod = (*g_dataHandler)->LookupModByName(modName);
+		if (listMod) {
+			bool isLight = (listMod->modIndex == 0xFE) || (listMod->lightIndex != 0xFFFF && listMod->lightIndex != 0);
+			if (outInfo) {
+				outInfo->name = listMod->name;
+				outInfo->compileIndex = listMod->modIndex;
+				outInfo->smallFileCompileIndex = listMod->lightIndex;
+				outInfo->isLight = isLight;
+			}
+			_MESSAGE("[VR_LookupLoadedMod] Found mod '%s' via modInfoList at compileIndex 0x%02X (light: %d, lightIndex: 0x%04X)",
+				listMod->name, listMod->modIndex, isLight ? 1 : 0, listMod->lightIndex);
 			return true;
 		}
 	}
@@ -185,10 +162,13 @@ TESForm * GetFormFromIdentifier(const std::string & identifier)
 		}
 		TESForm* form = LookupFormByID(formID);
 		if (form) {
-			_MESSAGE("[GetFormFromIdentifier] Resolved '%s|%s' -> FormID 0x%08X (form: %p)",
-				modName.c_str(), modForm.c_str(), formID, form);
+			_MESSAGE("[GetFormFromIdentifier] Resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
+				modName.c_str(), modForm.c_str(), formID, form,
+				(form->formType == kFormType_WEAP) ? static_cast<TESObjectWEAP*>(form)->GetFullName() : "");
 			return form;
 		}
+		_MESSAGE("[GetFormFromIdentifier] VR_LookupLoadedMod found '%s' but LookupFormByID(0x%08X) returned null, proceeding to fallback sweeps...",
+			modName.c_str(), formID);
 	}
 
 	// 2. Direct fallback for Fallout4.esm
@@ -202,17 +182,52 @@ TESForm * GetFormFromIdentifier(const std::string & identifier)
 		}
 	}
 
-	// 3. Fallback FormID sweep across active load order indices (0x01 to 0x20)
-	for (UInt32 idx = 0; idx < 0x20; ++idx) {
-		UInt32 testID = (idx << 24) | (rawID & 0x00FFFFFF);
+	// 3. Fallback FormID sweep:
+	// 3a. Sweep light mod space (0x000 to 0x200): 0xFE000000 | (lightIdx << 12) | (rawID & 0xFFF)
+	TESForm* candidateLightForm = nullptr;
+	for (UInt32 lightIdx = 0; lightIdx < 0x200; ++lightIdx) {
+		UInt32 testID = 0xFE000000 | ((lightIdx & 0xFFF) << 12) | (rawID & 0xFFF);
 		TESForm* form = LookupFormByID(testID);
 		if (form && form->formType == kFormType_WEAP) {
-			_MESSAGE("[GetFormFromIdentifier] FormID sweep resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
-				modName.c_str(), modForm.c_str(), testID, form, static_cast<TESObjectWEAP*>(form)->GetFullName());
-			return form;
+			if (DoesFormMatchMod(form, modName)) {
+				_MESSAGE("[GetFormFromIdentifier] Verified light sweep resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
+					modName.c_str(), modForm.c_str(), testID, form, static_cast<TESObjectWEAP*>(form)->GetFullName());
+				return form;
+			}
+			if (!candidateLightForm) candidateLightForm = form;
 		}
 	}
 
+	// 3b. Sweep regular mod space (0x01 to 0xFD): (idx << 24) | (rawID & 0x00FFFFFF)
+	TESForm* candidateRegularForm = nullptr;
+	for (UInt32 idx = 1; idx < 0xFE; ++idx) {
+		UInt32 testID = (idx << 24) | (rawID & 0x00FFFFFF);
+		TESForm* form = LookupFormByID(testID);
+		if (form && form->formType == kFormType_WEAP) {
+			if (DoesFormMatchMod(form, modName)) {
+				_MESSAGE("[GetFormFromIdentifier] Verified regular sweep resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
+					modName.c_str(), modForm.c_str(), testID, form, static_cast<TESObjectWEAP*>(form)->GetFullName());
+				return form;
+			}
+			if (!candidateRegularForm) candidateRegularForm = form;
+		}
+	}
+
+	// If no exact mod name match, but we found a valid WEAP candidate matching the local ID:
+	if (candidateLightForm) {
+		_MESSAGE("[GetFormFromIdentifier] Light sweep candidate resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
+			modName.c_str(), modForm.c_str(), candidateLightForm->formID, candidateLightForm,
+			static_cast<TESObjectWEAP*>(candidateLightForm)->GetFullName());
+		return candidateLightForm;
+	}
+	if (candidateRegularForm) {
+		_MESSAGE("[GetFormFromIdentifier] Regular sweep candidate resolved '%s|%s' -> FormID 0x%08X (form: %p, name: '%s')",
+			modName.c_str(), modForm.c_str(), candidateRegularForm->formID, candidateRegularForm,
+			static_cast<TESObjectWEAP*>(candidateRegularForm)->GetFullName());
+		return candidateRegularForm;
+	}
+
+	_MESSAGE("[GetFormFromIdentifier] Failed to resolve '%s|%s'", modName.c_str(), modForm.c_str());
 	return nullptr;
 }
 
